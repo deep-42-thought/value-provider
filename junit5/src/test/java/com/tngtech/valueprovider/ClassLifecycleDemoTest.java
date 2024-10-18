@@ -24,12 +24,10 @@ public class ClassLifecycleDemoTest {
     private static final Logger logger = LoggerFactory.getLogger(ClassLifecycleDemoTest.class);
 
     // as execution sequence of tests may vary
-    private static final List<ValueProvider> dataProviderRandoms = new ArrayList<>();
+    private static final List<ValueProvider> allRandoms = new ArrayList<>();
     private static ValueProvider beforeAllRandom;
 
     private ValueProvider instanceRandom = createRandomValueProvider();
-
-    private ValueProvider beforeEachRandom;
 
     @BeforeAll
     static void beforeAll() {
@@ -39,14 +37,14 @@ public class ClassLifecycleDemoTest {
 
     @BeforeEach
     void beforeEach() {
-        beforeEachRandom = createRandomValueProvider();
+        allRandoms.add(createRandomValueProvider());
     }
 
     @DataProvider
     public static Object[][] testValues1() {
         logger.debug("create DataProvider 1");
         ValueProvider dataProviderRandom = createRandomValueProvider();
-        dataProviderRandoms.add(dataProviderRandom);
+        allRandoms.add(dataProviderRandom);
         return $$(
                 $(dataProviderRandom.fixedDecoratedString("1")),
                 $(dataProviderRandom.fixedDecoratedString("2"))
@@ -64,7 +62,7 @@ public class ClassLifecycleDemoTest {
     public static Object[][] testValues2() {
         logger.debug("create DataProvider 2");
         ValueProvider dataProviderRandom = createRandomValueProvider();
-        dataProviderRandoms.add(dataProviderRandom);
+        allRandoms.add(dataProviderRandom);
         return $$(
                 $(dataProviderRandom.fixedDecoratedString("1")),
                 $(dataProviderRandom.fixedDecoratedString("2"))
@@ -88,14 +86,12 @@ public class ClassLifecycleDemoTest {
         verifyReproducibleValueProviderCreation();
     }
 
-    private void verifyReproducibleValueProviderCreation() {
+    @AfterAll
+    void verifyReproducibleValueProviderCreation() {
         new ValueProviderAsserter()
                 .addExpectedTestClassRandomValues(beforeAllRandom)
-                .addExpectedTestClassRandomValues(dataProviderRandoms)
-                .addExpectedTestMethodRandomValues(
-                        instanceRandom, beforeEachRandom, createRandomValueProvider(), createRandomValueProvider())
+                .addExpectedTestClassRandomValues(allRandoms)
                 .assertAllTestClassRandomValues()
-                .assertAllTestMethodRandomValues()
                 .assertAllSuffixes();
     }
 }
