@@ -2,8 +2,10 @@ package com.tngtech.valueprovider;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -56,8 +58,22 @@ public class ValueProviderExtension implements
         logger.debug("{} interceptTestClassConstructor {}",
                 identityHashCode(this), buildQualifiedTestMethodName(extensionContext));
         ensureStaticInitializationOfTestClass(extensionContext);
+        if (extensionContext.getTestInstanceLifecycle().equals(Optional.of(TestInstance.Lifecycle.PER_CLASS))) {
+            logger.debug("{} skipping, because the life cycle is {}", identityHashCode(this), extensionContext.getTestInstanceLifecycle());
+            return invocation.proceed();
+        }
         startTestMethodCycle();
         return invocation.proceed();
+    }
+
+    @Override
+    public void interceptTestMethod(Invocation<Void> invocation, ReflectiveInvocationContext<Method> invocationContext, ExtensionContext extensionContext) throws Throwable {
+        logger.debug("{} interceptTestMethod {}",
+                identityHashCode(this), buildQualifiedTestMethodName(extensionContext));
+        if (extensionContext.getTestInstanceLifecycle().equals(Optional.of(TestInstance.Lifecycle.PER_CLASS))) {
+            startTestMethodCycle();
+        }
+        InvocationInterceptor.super.interceptTestMethod(invocation, invocationContext, extensionContext);
     }
 
     private void ensureStaticInitializationOfTestClass(ExtensionContext extensionContext) throws ClassNotFoundException {
