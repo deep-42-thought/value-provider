@@ -74,6 +74,9 @@ public class ValueProviderExtension implements
             startTestMethodCycle();
         }
         InvocationInterceptor.super.interceptTestMethod(invocation, invocationContext, extensionContext);
+        if (extensionContext.getTestInstanceLifecycle().equals(Optional.of(TestInstance.Lifecycle.PER_CLASS))) {
+            finishTestMethodCycle();
+        }
     }
 
     private void ensureStaticInitializationOfTestClass(ExtensionContext extensionContext) throws ClassNotFoundException {
@@ -105,6 +108,9 @@ public class ValueProviderExtension implements
     public void afterEach(ExtensionContext context) {
         logger.debug("{} afterEach {}",
                 identityHashCode(this), buildQualifiedTestMethodName(context));
+        if (context.getTestInstanceLifecycle().equals(Optional.of(TestInstance.Lifecycle.PER_CLASS))) {
+            return;
+        }
         finishTestMethodCycle();
     }
 
